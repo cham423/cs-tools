@@ -4,6 +4,21 @@
 runuser=$(whoami)
 tempdir=$(pwd)
 
+# Environment Checks
+func_check_env(){
+  # Check Sudo Dependency going to need that!
+  if [ $(id -u) -ne '0' ]; then
+    echo
+    echo ' [ERROR]: This Setup Script Requires root privileges!'
+    echo '          Please run this setup script again with sudo or run as login as root.'
+    echo
+    exit 1
+  fi
+}
+
+echo 'installing java'
+apt-get update && apt-get -y install openjdk-11-jdk
+
 echo -n "Enter your DNS (A) record for domain [ENTER]: "
 read domain
 echo
@@ -21,20 +36,9 @@ domainStore="$domain.store"
 cobaltStrikeProfilePath="$cobaltStrike/httpsProfile"
 
 
-# Environment Checks
-func_check_env(){
-  # Check Sudo Dependency going to need that!
-  if [ $(id -u) -ne '0' ]; then
-    echo
-    echo ' [ERROR]: This Setup Script Requires root privileges!'
-    echo '          Please run this setup script again with sudo or run as login as root.'
-    echo
-    exit 1
-  fi
-}
 
 func_check_tools(){
-  # Check Sudo Dependency going to need that!
+  # Check for keytool 
   if [ $(which keytool) ]; then
     echo '[Sweet] java keytool is installed'
   else 

@@ -1,6 +1,10 @@
 #!/bin/bash
 # Author: cham423
 
+# todo
+# - config file
+# - save/restore run state for resuming interrupted setup
+
 # Global Variables
 runuser=$(whoami)
 tempdir=$(pwd)
@@ -40,7 +44,7 @@ fi
 func_check_os(){
   if [ $(lsb_release -rs) == '20.04' ]; then
     ubuntu=20
-  elif [ $(lsb_release -rs) == '18.04']; then
+  elif [ $(lsb_release -rs) == '18.04' ]; then
     ubuntu=18
   else
     echo
@@ -100,17 +104,6 @@ func_check_tools(){
     echo
     exit 1
    fi
-}
-
-func_apache_check(){
-  # Check Sudo Dependency going to need that!
-
-  # if [ sudo lsof -nPi | grep ":80 (LISTEN)" ]; then
-  #   echo
-  #   echo ' [ERROR]: This Setup Script Requires that port!'
-  #   echo '          80 not be in use.'
-  #   echo
-  #   exit 1
   if [ $(which java) ]; then
     echo '[Sweet] java is already installed'
     echo
@@ -120,47 +113,11 @@ func_apache_check(){
     echo '[Success] java is now installed'
     echo
   fi
-  if [ $(which apache2) ]; then
-    echo '[Sweet] Apache2 is already installed'
-    service apache2 start
-    echo
-  else
-    apt-get update
-    apt-get install apache2 -y 
-    echo '[Success] Apache2 is now installed'
-    echo
-    service apache2 restart
-    service apache2 start
-  fi
-  if [ $(lsof -nPi | grep -i apache | grep -c ":80 (LISTEN)") -ge 1 ]; then
-    echo '[Success] Apache2 is up and running!'
-  else 
-    echo
-    echo ' [ERROR]: Apache2 does not seem to be running on'
-    echo '          port 80? Try manual start?'
-    echo
-    exit 1
-  fi
   if [ $(which ufw) ]; then
     echo 'Looks like UFW is installed, opening ports 80 and 443'
     ufw allow 80/tcp
     ufw allow 443/tcp
     echo
-  fi
-}
-
-func_install_letsencrypt(){
-  echo '[Starting] cloning into letsencrypt!'
-  git clone https://github.com/cham423/certbot /opt/letsencrypt
-  echo '[Success] letsencrypt is built!'
-  cd /opt/letsencrypt
-  echo '[Starting] to build letsencrypt cert!'
-  ./letsencrypt-auto --apache -d $domain -n --register-unsafely-without-email --agree-tos 
-  if [ -e /etc/letsencrypt/live/$domain/fullchain.pem ]; then
-    echo '[Success] letsencrypt certs are built!'
-  else
-    echo "[ERROR] letsencrypt certs failed to build.  Check that DNS A record is properly configured for this domain"
-    exit 1
   fi
 }
 
@@ -173,14 +130,17 @@ func_install_certbot(){
   ln -s /snap/bin/certbot /usr/bin/certbot
   echo '[Success] certbot is good to go'
   echo '[Starting] to build letsencrypt cert!'
-  certbot --apache -d $domain -n --register-unsafely-without-email --agree-tos --apache-handle-modules false --apache-handle-sites false 
+  certbot certonly --standalone -d $domain -n --register-unsafely-without-email --agree-tos
   if [ -e /etc/letsencrypt/live/$domain/fullchain.pem ]; then
     echo '[Success] letsencrypt certs are built!'
   else
     echo "[ERROR] I didn't find a built certificate file."
-    echo "  potential causes:Check that DNS A record is properly configured for this domain"
+    echo "  Look for the certbot error above. Potential reasons for failure:"
+    echo "  Check that DNS A record is properly configured for this domain"
+    echo "  Copy error and create github issue or contact @cham423 on keybase"
+    echo "  "
     echo
-    echo "  you can go hunt for the certificate file in this directory:"
+    echo "  if it looks like the cert built, properly, you can go hunt for the certificate file in this directory:"
     echo "  /etc/letsencrypt/live/<your_domain>/fullchain.pem"
     echo
     echo "  if you find it, specify the directory in the --cert-path option when running this script and run again."
@@ -216,16 +176,14 @@ func_build_path(){
 func_build_c2(){
   cd $cobaltStrikeProfilePath
   echo "todo - clone sourcepoint, automate profile creation "
-  echo "keystore name (append to profile) \"$domainStore\"\""
-  echo "keystore password (append to profile) \"$password\"\""
+  echo "keystore name (append to profile) \"$domainStore\""
+  echo "keystore password (append to profile) \"$password\""
 }
 # Main section where all the stuff happens
 func_check_os
 func_prereqs
 func_read_vars
 func_check_tools
-func_apache_check
-#func_install_letsencrypt
 if [ "$certpath" == "" ]; then
 func_install_certbot
 func_build_pkcs

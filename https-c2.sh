@@ -1,9 +1,5 @@
 #!/bin/bash
-# Author: cham423
-
-# todo
-# - config file
-# - save/restore run state for resuming interrupted setup
+# author: cham423
 
 # Global Variables
 runuser=$(whoami)
@@ -46,6 +42,8 @@ func_check_os(){
     ubuntu=20
   elif [ $(lsb_release -rs) == '18.04' ]; then
     ubuntu=18
+  elif [ $(lsb_release -rs) == '10' ]; then
+    ubuntu=10
   else
     echo
     echo ' [WARNING]: Unsupported OS! you are not running ubuntu 18 or 20.'
@@ -55,8 +53,8 @@ func_check_os(){
 }
 # install java first
 func_prereqs(){
-echo '[Starting] Installing Java'
-apt-get update && apt-get -y install openjdk-11-jdk
+echo '[Starting] Installing Dependencies'
+apt-get update && apt-get -y install openjdk-11-jdk snapd
 }
 func_read_vars(){
 echo -n "Enter your DNS (A) record for domain [ENTER]: "
@@ -111,12 +109,6 @@ func_check_tools(){
     apt-get update
     apt-get install default-jre -y 
     echo '[Success] java is now installed'
-    echo
-  fi
-  if [ $(which ufw) ]; then
-    echo 'Looks like UFW is installed, opening ports 80 and 443'
-    ufw allow 80/tcp
-    ufw allow 443/tcp
     echo
   fi
 }

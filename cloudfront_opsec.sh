@@ -1,4 +1,5 @@
 #!/bin/bash
+# author: cham423
 apt -y install ufw jq
 ufw allow ssh
 ufw default deny incoming

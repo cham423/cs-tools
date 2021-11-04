@@ -1,5 +1,5 @@
 #!/bin/bash
-apt install ufw
+apt -y install ufw jq
 ufw allow ssh
 ufw default deny incoming
 ufw default allow outgoing
